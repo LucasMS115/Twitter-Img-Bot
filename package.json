@@ -1,0 +1,18 @@
+{
+  "name": "twitter-bot",
+  "version": "1.0.0",
+  "description": "Just trying to make a twitter bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lucas Mendes Sales",
+  "license": "ISC",
+  "dependencies": {
+    "cld": "^2.7.0",
+    "googleapis": "^58.0.0",
+    "request-promise": "^4.2.6",
+    "twit": "^2.2.11"
+  }
+}
