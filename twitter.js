@@ -216,12 +216,14 @@ module.exports = {
             T.get('followers/list', (err, data, response) => { 
 
                 followers = data.users.map(el => {return el.screen_name});
+
+                console.log(followers);
                 
                 try {
-                    for(var i = friends.length; i >= 0; i--){
+                    for(var i = friends.length - 1; i >= 0; i--){
                         if(followers.indexOf(friends[i]) === -1){
                             T.post('friendships/destroy', { screen_name: friends[i] }, (err, data, response) => {if(err)console.log(`F.D. -> ${err}`)});
-                            console.log('Pruned');
+                            console.log(friends[i] + ' Pruned');
                             break;
                         };
                     }
@@ -232,7 +234,6 @@ module.exports = {
 
             });
             
-           T.post('friendships/destroy', { user_id: data.users[0].id_str }, (err, data, response) => {if(err)console.log(err)});
         };
 
         T.get('friends/list', callback);

@@ -8,6 +8,8 @@ let switcher = 2;
 
 let breakpoint = '';
 
+console.log('###  INITIALIZING BOT  ###');
+
 async function getLanguage(txt) {
     const result = await cld.detect(txt);
     return result.languages[0].code;
@@ -58,7 +60,7 @@ function removeFromStr(str, arr){
 
 async function botReaction(data){ 
 
-     console.log('Initializing function');
+     console.log(' ###  Initializing function  ###');
 
      let hashtags;
      let mentions; 
@@ -163,7 +165,7 @@ async function followPeople(){
         }
         if(switcher === 1) followPeople();
         else if(switcher > 1 && switcher < 3) unfollowPeople();
-        else switcher = 1; unfollowPeople();
+        else unfollowPeople();
         
     }, 1000*60*10);
 }
@@ -178,7 +180,7 @@ async function unfollowPeople(){
         if(switcher === 1) followPeople();
         else if(switcher > 1 && switcher <= 3) unfollowPeople();
 
-    }, 1000*60*15);
+    }, 1000*60*20);
 }
 
 async function changeSwitcher(){
