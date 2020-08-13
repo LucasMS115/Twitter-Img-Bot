@@ -138,10 +138,10 @@ module.exports = {
         
             if(!imgUrl){
                 T.post('statuses/update' , tweet, returnData);
-                console.log('no image');
+                console.log('No image');
             } 
             else {
-                console.log('with image');
+                console.log('With image');
                 if(select === 'reply') resolve(inResponseTo);
                 else resolve(dataI);
             }
@@ -192,7 +192,6 @@ module.exports = {
             function returnData(err, data, response) {
                 if(err) console.log(`Follow ->  ${err}`);
                 else{
-                    console.log('followed');
                     resolve(data);
                 }
             };
@@ -203,12 +202,14 @@ module.exports = {
 
     },
 
+    //Unfollow someone who doesn't follow the bot 
     prune(){
 
-        let friends;
-        let followers;
+        let friends; //array with people the bot is following
+        let followers; //array with people following the bot
 
         function callback(err, data, response) {
+
             if(err) console.log(`Prune ->  ${err}`);
             friends = data.users.map(el => {return el.screen_name});
             console.log(friends);
@@ -220,6 +221,7 @@ module.exports = {
                 console.log(followers);
                 
                 try {
+                    //Unfollow the one user who is in the friends array but aren't in the followers array
                     for(var i = friends.length - 1; i >= 0; i--){
                         if(followers.indexOf(friends[i]) === -1){
                             T.post('friendships/destroy', { screen_name: friends[i] }, (err, data, response) => {if(err)console.log(`F.D. -> ${err}`)});
@@ -227,6 +229,7 @@ module.exports = {
                             break;
                         };
                     }
+
                 } catch (error) {
                     console.log(error)
                 }
@@ -240,18 +243,19 @@ module.exports = {
 
     },
     
+    //Search a random tweet and follow that user
     followRandom(language){
 
         let index = Math.floor(Math.random() * 19) ;
         let id;
         let txt;
 
-        if(language === 'pt') txt = 'Eu';
+        if(language === 'pt') txt = 'Eu'; //Search for tweets in portuguese or english
         else txt = ' I am ';
 
         this.searchTweets({q: txt , count: 20, result_type: 'recent', lang: language}).then(data => {
             id = data.statuses[index].user.id_str;
-            console.log(id)
+            console.log('Following ' + data.statuses[index].user.screen_name);
             this.follow(id);
         });
 

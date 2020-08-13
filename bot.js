@@ -4,12 +4,13 @@ const cld = require('cld'); //Language detection package
 
 const google = require('./google.js'); 
 
-let switcher = 2;
+let switcher = 1;
 
 let breakpoint = '';
 
 console.log('###  INITIALIZING BOT  ###');
 
+//Identify the language of a string
 async function getLanguage(txt) {
     const result = await cld.detect(txt);
     return result.languages[0].code;
@@ -18,7 +19,7 @@ async function getLanguage(txt) {
 async function getGoogleImg(txt){
 
     let language;
-    let gl;
+    let gl; //google language code
     let index = 0;
 
     try {
@@ -36,10 +37,11 @@ async function getGoogleImg(txt){
 
     await google.googleSearch(txt, 10, 'image', ['jpg', 'png'], gl)
     .then(response => {
+        //Change the link if it isn't a https
         while(url.indexOf('https') === -1){
-            url = response.data.items[index].link
+            console.log('Not a https #' + response.data.items[index].link + ' #');
             index++;
-            console.log('Index++');
+            url = response.data.items[index].link
         };
     })
     .catch(err => console.log(err));
@@ -48,8 +50,10 @@ async function getGoogleImg(txt){
 
 }
 
+//Remove words from a string
 function removeFromStr(str, arr){
 
+    //arr will be an array of words
     arr.forEach(element => {
         str = str.replace(element, '')
     });
@@ -67,9 +71,11 @@ async function botReaction(data){
      let txt; //text of tweet
      let tid; //tweet id
      let url; //img url
+
      if(data.in_reply_to_status_id_str) tid = data.in_reply_to_status_id_str;
      else tid = data.id_str;
 
+     //Preparing the text for the search
      try {
          await twt.searchById(tid)
          .then(data => {
@@ -80,6 +86,7 @@ async function botReaction(data){
 
              if(hashtags) txt = removeFromStr(txt, hashtags.map((el) => {return '#' + el.text}));
              if(mentions) txt = removeFromStr(txt, mentions.map((el) => {return '@'+ el.screen_name}));
+             txt = txt.substring(0, 99);
              
          })
      } catch (error) {
@@ -87,8 +94,9 @@ async function botReaction(data){
      }
      
 
-    console.log(txt);
+    console.log('Tweet text to search # ' + txt + ' #');
 
+    //Searching the img  
     try {
          url = await getGoogleImg(txt);
     } catch (error) {
@@ -96,48 +104,55 @@ async function botReaction(data){
     }
     
 
+    //Trying to prevent a loop coused by retweets
     if(data.id_str === breakpoint) {
         console.log('BREAK');
         return;
     };
 
-    console.log(url);
+    console.log('URL -> '+ url);
 
     try {
-
-     twt.postTweet('Here: ', url, 'reply', data)
-     .then(tweet =>{
-
-         try{
-             twt.follow(tweet.user.id_str);
-         }catch(err){
-             console.log('Try follow\n' + err);
-         };
-
-         let id;
-         if(tweet.in_reply_to_status_id){
-            id = tweet.in_reply_to_status_id_str;
-         } 
-         else id = tweet.id_str;
-
-         twt.retweet(id)
-         .then(data => {
-             breakpoint = data.id_str;
-         })
-         .catch(err => {
-             console.log(err);
-         });
-
-         try{
-             twt.favourite(id);
-         }catch(err){
-             console.log('Try favourite\n' + err);
-         };
-     })
-     .catch((err) => {
-         console.log(err);
-     });
         
+        twt.postTweet('Here: ', url, 'reply', data)
+        .then(tweet =>{
+
+            try{
+                twt.follow(tweet.user.id_str); //Follow who mentioned
+                twt.follow(tweet.in_reply_to_user_id_str); //Follow who was replied
+            }catch(err){
+                console.log('Try follow\n' + err);
+            };
+   
+            //The intention is to favourite and retweet the tweet we are replying
+            let id;
+            if(tweet.in_reply_to_status_id){
+               id = tweet.in_reply_to_status_id_str;
+            } 
+            else id = tweet.id_str;
+   
+            twt.retweet(id)
+            .then(data => {
+                breakpoint = data.id_str;
+            })
+            .catch(err => {
+                console.log(err);
+            });
+   
+            //The set timeout is an attempt to prevent twitter's spamming block
+            setTimeout(function(){
+               try{
+                   twt.favourite(id);
+               }catch(err){
+                   console.log('Try favourite\n' + err);
+               };
+            }, 1000);
+         
+            })
+        .catch((err) => {
+            console.log(err);
+        });
+            
     } catch (error) {
          console.log('Try Post\n' + error);
     }
@@ -146,11 +161,12 @@ async function botReaction(data){
 
 };
 
+
 async function followPeople(){
 
     setTimeout(function(){
         try {
-            twt.followRandom('en');
+            twt.followRandom('en'); //Follow an english speaker
         } catch (error) {
             console.log(error);
         }
@@ -159,7 +175,7 @@ async function followPeople(){
     setTimeout(function(){
           
         try {
-            twt.followRandom('pt');
+            twt.followRandom('pt'); //Follow an portuguese speaker
         } catch (error) {
             console.log(error);
         }
@@ -170,6 +186,7 @@ async function followPeople(){
     }, 1000*60*10);
 }
 
+//Unfollow who donn't follows back
 async function unfollowPeople(){
     setTimeout(function(){ 
         try {
@@ -183,6 +200,7 @@ async function unfollowPeople(){
     }, 1000*60*20);
 }
 
+//The intention here is to follow 144 people in 12 hours and then unfollow 72 people in 24 hours, trying to prevent spamming
 async function changeSwitcher(){
     setTimeout(function(){ 
 
@@ -195,7 +213,7 @@ async function changeSwitcher(){
 
         changeSwitcher();
 
-    }, 1000*60*60*24);
+    }, 1000*60*60*12);
 }
 
 
@@ -203,6 +221,8 @@ async function changeSwitcher(){
 followPeople();
 changeSwitcher();
 twt.track('@RandyGoogleImg', botReaction);
+
+
 
   
 
