@@ -54,6 +54,8 @@ async function getImg(path){
 
 module.exports = {
 
+    efiaf: false, //Every friend is a follower
+
     track(at, callback){
         const stream = T.stream('statuses/filter', { track: at });
         stream.on('tweet', callback);
@@ -212,13 +214,11 @@ module.exports = {
 
             if(err) console.log(`Prune ->  ${err}`);
             friends = data.users.map(el => {return el.screen_name});
-            console.log(friends);
             
             T.get('followers/list', (err, data, response) => { 
 
                 followers = data.users.map(el => {return el.screen_name});
-
-                console.log(followers);
+                if(friends.length + 1 <= followers.length) efiaf = true;
                 
                 try {
                     //Unfollow the one user who is in the friends array but aren't in the followers array
@@ -233,7 +233,6 @@ module.exports = {
                 } catch (error) {
                     console.log(error)
                 }
-                
 
             });
             

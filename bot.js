@@ -39,9 +39,9 @@ async function getGoogleImg(txt){
     .then(response => {
         //Change the link if it isn't a https
         while(url.indexOf('https') === -1){
-            console.log('Not a https #' + response.data.items[index].link + ' #');
+            console.log('Not a https # ' + response.data.items[index].link + ' #');
             index++;
-            url = response.data.items[index].link
+            url = response.data.items[index].link;
         };
     })
     .catch(err => console.log(err));
@@ -64,7 +64,7 @@ function removeFromStr(str, arr){
 
 async function botReaction(data){ 
 
-     console.log(' ###  Initializing function  ###');
+     console.log('###  Initializing function  ###');
 
      let hashtags;
      let mentions; 
@@ -86,6 +86,7 @@ async function botReaction(data){
 
              if(hashtags) txt = removeFromStr(txt, hashtags.map((el) => {return '#' + el.text}));
              if(mentions) txt = removeFromStr(txt, mentions.map((el) => {return '@'+ el.screen_name}));
+             if(txt.indexOf('http') !== -1) txt = txt.substring(txt.indexOf('http'), 0);
              txt = txt.substring(0, 99);
              
          })
@@ -170,7 +171,7 @@ async function followPeople(){
         } catch (error) {
             console.log(error);
         }
-    }, 1000*60*5);
+    }, 1000*60*15);
 
     setTimeout(function(){
           
@@ -183,7 +184,7 @@ async function followPeople(){
         else if(switcher > 1 && switcher < 3) unfollowPeople();
         else unfollowPeople();
         
-    }, 1000*60*10);
+    }, 1000*60*30);
 }
 
 //Unfollow who donn't follows back
@@ -196,24 +197,29 @@ async function unfollowPeople(){
         }
         if(switcher === 1) followPeople();
         else if(switcher > 1 && switcher <= 3) unfollowPeople();
+        else if(switcher > 1 && switcher <= 3 && twt.efiaf){
+            switcher = 1;
+            twt.efiaf = false;
+            followPeople();
+        };
 
-    }, 1000*60*20);
+    }, 1000*60*30);
 }
 
-//The intention here is to follow 144 people in 12 hours and then unfollow 72 people in 24 hours, trying to prevent spamming
+//The intention here is to follow 144 people in 12 hours and then try to unfollow 144 people in 24 hours, trying to prevent spamming
 async function changeSwitcher(){
     setTimeout(function(){ 
 
         console.log('Switcher ' + switcher);
 
-        if(switcher === 1) switcher++;
+        if(switcher < 3 ) switcher++;
         else if (switcher === 3) switcher = 1;
 
         console.log('Switcher ' + switcher);
 
         changeSwitcher();
 
-    }, 1000*60*60*12);
+    }, 1000*60*60*6);
 }
 
 
