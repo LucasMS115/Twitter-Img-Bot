@@ -4,7 +4,7 @@ const cld = require('cld'); //Language detection package
 
 const google = require('./google.js'); 
 
-let switcher = 1;
+let switcher = 2;
 
 let breakpoint = '';
 
@@ -33,20 +33,25 @@ async function getGoogleImg(txt){
 
     console.log(`Initializing ${gl} img search for: ${txt}`)
 
-    let url = ' ';
+    let urls = [];
+    let link = ' ';
 
     await google.googleSearch(txt, 10, 'image', ['jpg', 'png'], gl)
     .then(response => {
-        //Change the link if it isn't a https
-        while(url.indexOf('https') === -1){
-            console.log('Not a https # ' + response.data.items[index].link + ' #');
+        while(index < 10){
+            link = response.data.items[index].link;
+            if(link.indexOf('https') === -1){
+                console.log('Not a https # ' + response.data.items[index].link + ' #');
+            }else{
+                urls.push(link);
+            }
             index++;
-            url = response.data.items[index].link;
         };
     })
     .catch(err => console.log(err));
 
-    return url;  
+    console.log('Returning urls');
+    return urls;  
 
 }
 
@@ -70,10 +75,15 @@ async function botReaction(data){
      let mentions; 
      let txt; //text of tweet
      let tid; //tweet id
-     let url; //img url
+     let urls; //img urls
 
      if(data.in_reply_to_status_id_str) tid = data.in_reply_to_status_id_str;
      else tid = data.id_str;
+
+     if(data.in_reply_to_status_id != null && data.in_reply_to_user_id_str === '1293740126355456002'){
+        console.log('Can\'t reply to myself');
+        return;
+     }
 
      //Preparing the text for the search
      try {
@@ -91,15 +101,16 @@ async function botReaction(data){
              
          })
      } catch (error) {
-         console.log('Try SPID\n' + error);
+         console.log('Try SBID\n' + error);
      }
      
 
     console.log('Tweet text to search # ' + txt + ' #');
 
+
     //Searching the img  
     try {
-         url = await getGoogleImg(txt);
+         urls = await getGoogleImg(txt);
     } catch (error) {
          console.log('Try GFImg\n' + error);
     }
@@ -111,11 +122,9 @@ async function botReaction(data){
         return;
     };
 
-    console.log('URL -> '+ url);
-
     try {
         
-        twt.postTweet('Here: ', url, 'reply', data)
+        twt.postTweet('Here:', urls, 'reply', data)
         .then(tweet =>{
 
             try{
@@ -132,22 +141,22 @@ async function botReaction(data){
             } 
             else id = tweet.id_str;
    
-            twt.retweet(id)
+            /* twt.retweet(id)
             .then(data => {
                 breakpoint = data.id_str;
             })
             .catch(err => {
                 console.log(err);
-            });
+            }); */
    
             //The set timeout is an attempt to prevent twitter's spamming block
-            setTimeout(function(){
+            /* setTimeout(function(){
                try{
                    twt.favourite(id);
                }catch(err){
                    console.log('Try favourite\n' + err);
                };
-            }, 1000);
+            }, 1000); */
          
             })
         .catch((err) => {
@@ -171,7 +180,7 @@ async function followPeople(){
         } catch (error) {
             console.log(error);
         }
-    }, 1000*60*15);
+    }, 1000*60*20);
 
     setTimeout(function(){
           
@@ -184,7 +193,7 @@ async function followPeople(){
         else if(switcher > 1 && switcher < 3) unfollowPeople();
         else unfollowPeople();
         
-    }, 1000*60*30);
+    }, 1000*60*40);
 }
 
 //Unfollow who donn't follows back
@@ -203,7 +212,7 @@ async function unfollowPeople(){
             followPeople();
         };
 
-    }, 1000*60*30);
+    }, 1000*60*40);
 }
 
 //The intention here is to follow 144 people in 12 hours and then try to unfollow 144 people in 24 hours, trying to prevent spamming

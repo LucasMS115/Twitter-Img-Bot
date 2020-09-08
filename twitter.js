@@ -8,7 +8,7 @@ const T = new Twit(config);
 
 const https = require('https');
 
-function postImg(url, tweet) {
+function postImg(urls, tweet, index) {
     
     return new Promise((resolve, reject) => {
 
@@ -22,22 +22,27 @@ function postImg(url, tweet) {
             tweet.media_ids = [media_id];
             T.post('statuses/update' , tweet, returnData);
         };
-        
-        https.get(url, response => {
-            if (response.statusCode !== 200)
-                throw new Error('Link invalido')
 
-            response.setEncoding('base64')
-            body = ''
-            response.on('data', data => {
-                body += data
+        try{
+            https.get(urls[index], response => {
+                if (response.statusCode !== 200)
+                    throw new Error('Link invalido')
+                response.setEncoding('base64')
+                body = ''
+                response.on('data', data => {
+                    body += data
+                })
+
+                response.on('end', () => {
+                    T.post('media/upload', {media_data: body}, uploaded);
+                })
+
             })
+        }catch(err){
+            console.log(err);
+            resolve(null);
+        }
 
-            response.on('end', () => {
-                T.post('media/upload', {media_data: body}, uploaded);
-            })
-
-        })
     });
 }
 
@@ -93,11 +98,12 @@ module.exports = {
     },
 
     //post a tweet and return the data of it
-    async postTweet(statusTxt = 'There it is!!', imgUrl = null,  select = 'post' , inResponseTo = undefined){
+    async postTweet(statusTxt = 'There it is!!', imgUrls = null,  select = 'post' , inResponseTo = undefined){
 
         //inResponseTo will be the full data of a tweet
 
-        let dataI;
+        let dataI = null;
+        let imgIndex = 0;
         let replyTo = '';
         let user = '';
         let tweet; //tweet is an object specifed by the twitter api
@@ -128,8 +134,14 @@ module.exports = {
         };
         
         //if there is a media, it needs to be uploaded before it can be posted
-        if(imgUrl) dataI = await postImg(imgUrl, tweet);
-
+        if(imgUrls){
+            while(!dataI){
+                dataI = await postImg(imgUrls, tweet, imgIndex);
+                console.log("Data image: " + dataI);
+                imgIndex++;
+            }
+        }
+            
         return new Promise((resolve, reject)=>{
 
             function returnData(err, data, response) {
@@ -138,7 +150,7 @@ module.exports = {
                 else resolve(data);
             };
         
-            if(!imgUrl){
+            if(!imgUrls){
                 T.post('statuses/update' , tweet, returnData);
                 console.log('No image');
             } 
