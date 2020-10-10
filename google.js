@@ -9,7 +9,7 @@ module.exports = {
         
         return dataPromise = new Promise((resolve, reject)=>{
             
-            const data = customSearch.cse.list({
+            let data = customSearch.cse.list({
                 auth: gsCredentials.api_key,
                 cx: gsCredentials.search_engine_id,
                 q: txt,

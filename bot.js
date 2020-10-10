@@ -33,25 +33,20 @@ async function getGoogleImg(txt){
 
     console.log(`Initializing ${gl} img search for: ${txt}`)
 
-    let urls = [];
-    let link = ' ';
+    let url = ' ';
 
     await google.googleSearch(txt, 10, 'image', ['jpg', 'png'], gl)
     .then(response => {
-        while(index < 10){
-            link = response.data.items[index].link;
-            if(link.indexOf('https') === -1){
-                console.log('Not a https # ' + response.data.items[index].link + ' #');
-            }else{
-                urls.push(link);
-            }
+        //Change the link if it isn't a https
+        while(url.indexOf('https') === -1){
+            console.log('Not a https # ' + response.data.items[index].link + ' #');
             index++;
+            url = response.data.items[index].link;
         };
     })
     .catch(err => console.log(err));
 
-    console.log('Returning urls');
-    return urls;  
+    return url;  
 
 }
 
@@ -75,12 +70,12 @@ async function botReaction(data){
      let mentions; 
      let txt; //text of tweet
      let tid; //tweet id
-     let urls; //img urls
+     let url; //img url
 
      if(data.in_reply_to_status_id_str) tid = data.in_reply_to_status_id_str;
      else tid = data.id_str;
 
-     if(data.in_reply_to_status_id != null && data.in_reply_to_user_id_str === '1293740126355456002'){
+     if(data.in_reply_to_screen_name === 'RandyGoogleImg'){
         console.log('Can\'t reply to myself');
         return;
      }
@@ -101,16 +96,15 @@ async function botReaction(data){
              
          })
      } catch (error) {
-         console.log('Try SBID\n' + error);
+         console.log('Try SPID\n' + error);
      }
      
 
     console.log('Tweet text to search # ' + txt + ' #');
 
-
     //Searching the img  
     try {
-         urls = await getGoogleImg(txt);
+         url = await getGoogleImg(txt);
     } catch (error) {
          console.log('Try GFImg\n' + error);
     }
@@ -122,9 +116,11 @@ async function botReaction(data){
         return;
     };
 
+    console.log('URL -> '+ url);
+
     try {
         
-        twt.postTweet('Here:', urls, 'reply', data)
+        twt.postTweet('Here: ', url, 'reply', data)
         .then(tweet =>{
 
             try{
@@ -141,22 +137,22 @@ async function botReaction(data){
             } 
             else id = tweet.id_str;
    
-            /* twt.retweet(id)
+            twt.retweet(id)
             .then(data => {
                 breakpoint = data.id_str;
             })
             .catch(err => {
                 console.log(err);
-            }); */
+            });
    
             //The set timeout is an attempt to prevent twitter's spamming block
-            /* setTimeout(function(){
+            setTimeout(function(){
                try{
                    twt.favourite(id);
                }catch(err){
                    console.log('Try favourite\n' + err);
                };
-            }, 1000); */
+            }, 1000);
          
             })
         .catch((err) => {
