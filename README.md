@@ -1,5 +1,5 @@
 # Twitter-Img-Bot
-A twitter bot that replies with an img resulted from a search with a tweet text. Running as @RandyGoogleImg
+A twitter bot that replies with an img resulted from a search with a tweet text.
 
 This is a twitter bot made using the twit package - https://www.npmjs.com/package/twit - and the google API.
 It will favourite, retweet and reply anybody who mention @RandyGoogleImg on a tweet, or reply a tweet if it's mentioned in the comments, with an image serched in google
@@ -10,4 +10,4 @@ The way the bot is selecting the image to reply need some improvement to get mor
 
 https://twitter.com/RandyGoogleImg
 
-It isn't following people at this time because it was draining my Heroku free dynos :)
+It isn't running at this time because it was draining out my Heroku free dynos :)
